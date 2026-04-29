@@ -21,7 +21,7 @@
 
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/wade0317/GassTopList.git}"
+REPO_URL="${REPO_URL:-git@github.com:wade0317/GassTopList.git}"
 CODE_DIR="${CODE_DIR:-/opt/GassTopList}"
 WEB_ROOT="${WEB_ROOT:-/var/www/gasstoplist}"
 DATA_DIR="${DATA_DIR:-/var/lib/gasstoplist}"

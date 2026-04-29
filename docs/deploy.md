@@ -180,4 +180,39 @@ git push origin v1.0.0
 | `Permission denied (publickey)` | `authorized_keys` 文件权限必须 600，所属目录 `~/.ssh` 必须 700；`SELinux` 严格模式下 `restorecon -R ~/.ssh` |
 | `[deploy-wrapper] 拒绝：非法的 ref 格式` | ref 不在白名单里。要部署其他分支需要修改 `deploy/deploy-wrapper.sh` 的正则 |
 | `install.sh` 半路报错 | Actions 日志里直接看；常见是 `git fetch` 网络抖动、`docker compose up` 镜像构建超时 |
+| `curl 28 Failed to connect to github.com` | 国内 ECS 访问 github.com:443 被墙。按 § 6.6 改走 SSH over 443 |
 | 想撤回某个版本 | `git tag v0.9.x-revert` 指向老的 commit 然后 push，触发回滚部署；或手动触发 workflow 指定历史 commit SHA |
+
+### 6.6 国内 VPS 访问 GitHub（SSH over 443）
+
+国内云厂商 ECS 经常无法稳定连 `github.com:443`。GitHub 官方提供 `ssh.github.com:443` 备用入口，**install.sh 的默认 `REPO_URL` 已切换为 SSH URL**，配套需在 VPS 上做一次性配置：
+
+**(1) 生成只读部署密钥**：
+```bash
+ssh-keygen -t ed25519 -f /root/.ssh/github_repo_readonly -N '' -C "vps-readonly"
+```
+
+**(2) 看公钥**：
+```bash
+cat /root/.ssh/github_repo_readonly.pub
+```
+
+**(3) 在 GitHub 仓库加 Deploy Key**：`Settings → Deploy keys → Add deploy key` → 粘贴公钥 → 不勾 "Allow write access" → 保存
+
+**(4) 配置 SSH 走 443 端口**（只对 github.com，不影响其他）：
+```bash
+printf 'Host github.com\n  HostName ssh.github.com\n  User git\n  Port 443\n  IdentityFile /root/.ssh/github_repo_readonly\n' >> /root/.ssh/config && chmod 600 /root/.ssh/config
+```
+
+**(5) 测试连通性**：
+```bash
+ssh -T git@github.com
+```
+期望：`Hi wade0317/GassTopList! You've successfully authenticated, but GitHub does not provide shell access.`
+
+**(6) 切换现有仓库 remote 为 SSH URL**（首次只用做这一次）：
+```bash
+git -C /opt/GassTopList remote set-url origin git@github.com:wade0317/GassTopList.git && git -C /opt/GassTopList fetch origin
+```
+
+之后所有 `git fetch / git pull` 都走 22 / 443，不再依赖 github.com:443。
