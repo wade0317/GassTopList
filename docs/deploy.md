@@ -99,3 +99,85 @@ docker compose -f /opt/GassTopList/deploy/docker/docker-compose.yml start
 
 - 后端**无鉴权**：工作区 ID 仅校验格式，泄露即等于密码。需要加固时在 Nginx 加 `auth_basic` 或 IP 白名单到 `location /api/`。
 - 容器以非 root（uid 10001）运行；备份文件勿放到 `/var/www/` 内。
+
+## 6. 自动部署（GitHub Actions → SSH → install.sh）
+
+### 6.1 触发规则
+
+- `git push` **新建以 `v` 开头的 tag**（如 `v1.0.0`）→ 自动发版
+- 或在 GitHub `Actions` 页面手动触发 `Deploy` workflow（可指定 ref）
+- **不**走 `push 到 main 自动部署**（防止手滑直接上线）
+
+### 6.2 一次性服务器配置
+
+下面所有命令在 VPS 上以 **root** 身份执行；每条都是**单行**，可整行复制粘贴。
+
+**(1) 生成专用部署密钥**（不要复用你日常的 SSH 私钥）：
+```bash
+ssh-keygen -t ed25519 -f /root/.ssh/github-actions-deploy -N '' -C "wade0317@example"
+```
+
+得到两个文件：`/root/.ssh/github-actions-deploy`（私钥，进 GitHub Secrets）+ `/root/.ssh/github-actions-deploy.pub`（公钥，进 authorized_keys）。
+
+**(2) 把公钥写进 `authorized_keys`，并用 forced-command 锁死它**：
+```bash
+echo "command=\"/opt/GassTopList/deploy/deploy-wrapper.sh\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty,restrict $(cat /root/.ssh/github-actions-deploy.pub)" >> /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys
+```
+
+> `restrict` + `command="..."` 的组合限制了：这把 key 一登录就**只能跑** wrapper 脚本，无法开 shell、转发端口、跑任意命令。
+
+**(3) 确认 wrapper 脚本可执行**（仓库已带，部署到 `/opt/GassTopList` 后路径就在）：
+```bash
+ls -la /opt/GassTopList/deploy/deploy-wrapper.sh
+```
+期望看到 `-rwxr-xr-x`。如果没有可执行权限：`chmod +x /opt/GassTopList/deploy/deploy-wrapper.sh`
+
+**(4) 复制私钥准备贴到 GitHub Secrets**：
+```bash
+cat /root/.ssh/github-actions-deploy
+```
+完整复制输出（含 `-----BEGIN/END OPENSSH PRIVATE KEY-----` 两行）。
+
+**(5) 在 VPS 本机自检合法 ref**（应进入 install.sh 流程）：
+```bash
+ssh -i /root/.ssh/github-actions-deploy -o StrictHostKeyChecking=no root@127.0.0.1 "main"
+```
+
+**(6) 在 VPS 本机自检非法 ref**（应被 wrapper 拒绝）：
+```bash
+ssh -i /root/.ssh/github-actions-deploy -o StrictHostKeyChecking=no root@127.0.0.1 "; rm -rf /"
+```
+期望输出：`[deploy-wrapper] 拒绝：非法的 ref 格式 -> ; rm -rf /`
+
+### 6.3 GitHub 仓库配置
+
+`Settings → Secrets and variables → Actions → New repository secret`，新增 3 个：
+
+| 名称 | 值 |
+|------|----|
+| `SSH_HOST` | `gass.bilicool.com`（或服务器 IP） |
+| `SSH_USER` | `root` |
+| `SSH_PRIVATE_KEY` | 第 (4) 步那段完整私钥内容 |
+
+### 6.4 发版流程
+
+```bash
+# 在本地仓库
+git tag v1.0.0
+git push origin v1.0.0
+# → GitHub Actions 监听到 tag push，自动跑 .github/workflows/deploy.yml
+# → SSH 进 VPS 触发 deploy-wrapper.sh → install.sh
+# → 部署日志全程在 GitHub Actions 的 run 页面里看
+```
+
+紧急情况手动触发：进 GitHub `Actions` → `Deploy` → `Run workflow` → 填 ref（默认 `main`） → 跑。
+
+### 6.5 故障排查
+
+| 现象 | 排查 |
+|------|------|
+| Actions 中 SSH 连接失败 | 服务器 22 端口防火墙 / 安全组；`/var/log/auth.log` 看是否拒绝 |
+| `Permission denied (publickey)` | `authorized_keys` 文件权限必须 600，所属目录 `~/.ssh` 必须 700；`SELinux` 严格模式下 `restorecon -R ~/.ssh` |
+| `[deploy-wrapper] 拒绝：非法的 ref 格式` | ref 不在白名单里。要部署其他分支需要修改 `deploy/deploy-wrapper.sh` 的正则 |
+| `install.sh` 半路报错 | Actions 日志里直接看；常见是 `git fetch` 网络抖动、`docker compose up` 镜像构建超时 |
+| 想撤回某个版本 | `git tag v0.9.x-revert` 指向老的 commit 然后 push，触发回滚部署；或手动触发 workflow 指定历史 commit SHA |

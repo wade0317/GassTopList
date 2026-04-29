@@ -1,0 +1,59 @@
+name: Deploy
+
+# 触发条件：
+#  1) push 到 v* 形式的 tag（推荐发版方式）
+#  2) Actions 页面手动触发（保险开关，可指定 ref）
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: '要部署的 ref（tag 如 v1.0.0 / 分支 main / 完整 40 位 SHA）'
+        default: 'main'
+        required: true
+
+# 同一时间只允许一个部署在跑，避免并发踩踏
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 计算要部署的 ref
+        id: ref
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ref=${{ inputs.ref }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 准备 SSH 凭证
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # 首次握手用 ssh-keyscan 拉服务端公钥；要更严可改为 Secrets 里固化指纹
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: 触发服务器部署 (REF=${{ steps.ref.outputs.ref }})
+        env:
+          REF: ${{ steps.ref.outputs.ref }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          # forced-command 已经在 authorized_keys 锁死要跑哪个脚本；
+          # 这里"命令"实际是给 wrapper 的 SSH_ORIGINAL_COMMAND，传 ref 字符串。
+          ssh -i ~/.ssh/deploy_key \
+              -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
+              -o ServerAliveInterval=30 \
+              "$SSH_USER@$SSH_HOST" "$REF"
