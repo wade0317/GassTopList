@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>德州扑克记分工具</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部导航 -->
+    <header class="app-header">
+      <h1 class="app-title">♠ 记分工具</h1>
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="entry">记分录入</button>
+        <button class="tab-btn" data-tab="leaderboard">排行榜</button>
+        <button class="tab-btn" data-tab="chart">积分明细</button>
+        <button class="tab-btn" data-tab="members">成员管理</button>
+      </nav>
+    </header>
+
+    <!-- 主内容区 -->
+    <main id="main-content">
+      <!-- 记分录入页 -->
+      <section id="page-entry" class="page active">
+        <!-- 录入表单 -->
+        <div class="card entry-form-card">
+          <h2 class="card-title">录入积分</h2>
+          <form id="entry-form">
+            <div class="form-group">
+              <label class="form-label">输入积分（留空则不记录）</label>
+              <div id="entry-members">
+                <!-- 由 JS 动态渲染 -->
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label class="form-label">时间</label>
+                <div class="time-picker">
+                  <input type="date" id="entry-date" class="form-input" required>
+                  <input type="time" id="entry-time" class="form-input" required>
+                </div>
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label" for="entry-note">备注（选填）</label>
+                <input type="text" id="entry-note" class="form-input" placeholder="局号 / 场地">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">确认录入</button>
+          </form>
+        </div>
+
+        <!-- 历史记录 -->
+        <div class="card history-card">
+          <div class="card-header">
+            <h2 class="card-title">历史记录</h2>
+            <div class="history-filters">
+              <select id="history-member-filter" class="form-input form-select-sm">
+                <option value="">全部成员</option>
+              </select>
+            </div>
+          </div>
+          <div id="history-list" class="history-list">
+            <!-- 由 JS 动态渲染 -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 排行榜页 -->
+      <section id="page-leaderboard" class="page">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">排行榜</h2>
+          </div>
+          <!-- 时间筛选 -->
+          <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all">总榜</button>
+            <button class="filter-btn" data-filter="today">今日</button>
+            <button class="filter-btn" data-filter="week">本周</button>
+            <button class="filter-btn" data-filter="month">本月</button>
+            <button class="filter-btn" data-filter="7d">近7天</button>
+            <button class="filter-btn" data-filter="30d">近30天</button>
+          </div>
+          <div class="custom-date-range" id="custom-date-range">
+            <label class="form-label-sm">自定义范围：</label>
+            <input type="date" id="start-date" class="form-input form-input-sm">
+            <span class="date-separator">~</span>
+            <input type="date" id="end-date" class="form-input form-input-sm">
+            <button id="apply-date-filter" class="btn btn-sm">筛选</button>
+          </div>
+          <!-- 排行对比模式 -->
+          <div class="compare-toggle">
+            <label class="switch-label">
+              <input type="checkbox" id="compare-mode">
+              <span class="switch-text">显示总积分对比</span>
+            </label>
+          </div>
+          <!-- 排行表格 -->
+          <div class="table-wrap">
+            <table class="rank-table" id="rank-table">
+              <thead>
+                <tr>
+                  <th class="col-rank">排名</th>
+                  <th class="col-name">成员</th>
+                  <th class="col-score">本期积分</th>
+                  <th class="col-total" id="total-col-header" style="display:none">总积分</th>
+                </tr>
+              </thead>
+              <tbody id="rank-body">
+                <!-- 由 JS 动态渲染 -->
+              </tbody>
+            </table>
+          </div>
+          <div id="rank-empty" class="empty-state">
+            <p>暂无记录</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 积分明细页 -->
+      <section id="page-chart" class="page">
+        <div class="card">
+          <h2 class="card-title">积分明细</h2>
+          <div class="form-group">
+            <label class="form-label">选择成员（可多选）</label>
+            <div class="member-checkbox-group" id="chart-members"></div>
+          </div>
+          <div class="chart-mode-bar">
+            <button class="chart-mode-btn active" data-mode="session">按次</button>
+            <button class="chart-mode-btn" data-mode="cumulative">累计</button>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="score-chart"></canvas>
+          </div>
+          <div id="chart-empty" class="empty-state">
+            <p>请先选择成员</p>
+          </div>
+          <div id="chart-summary" class="chart-summary" style="display:none"></div>
+        </div>
+      </section>
+
+      <!-- 成员管理页 -->
+      <section id="page-members" class="page">
+        <div class="card">
+          <h2 class="card-title">添加成员</h2>
+          <form id="member-form" class="inline-form">
+            <input type="text" id="member-name" class="form-input flex-1" placeholder="输入成员名称" required maxlength="20">
+            <button type="submit" class="btn btn-primary">添加</button>
+          </form>
+        </div>
+        <div class="card">
+          <h2 class="card-title">成员列表 <span id="member-count" class="badge"></span></h2>
+          <div id="member-list">
+            <!-- 由 JS 动态渲染 -->
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">云端同步（后端）</h2>
+          <p class="privacy-notice" style="margin-bottom:10px">
+            在电脑本机或其它设备上启动后端服务后，可把积分数据存到服务器，便于多设备共用或备份。
+          </p>
+          <div class="form-group">
+            <label class="form-label" for="api-base-url">服务器地址</label>
+            <input type="url" id="api-base-url" class="form-input" placeholder="http://127.0.0.1:3840" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="workspace-id-display">工作区 ID（请勿泄露给他人）</label>
+            <div class="inline-form">
+              <input type="text" id="workspace-id-display" class="form-input flex-1" readonly title="同一 ID 在不同浏览器可拉取同一份数据">
+              <button type="button" id="btn-copy-workspace" class="btn btn-outline">复制</button>
+            </div>
+          </div>
+          <div class="data-actions">
+            <button type="button" id="btn-test-api" class="btn btn-outline">测试连接</button>
+            <button type="button" id="btn-pull-server" class="btn btn-outline">从服务器拉取</button>
+            <button type="button" id="btn-push-server" class="btn btn-primary">上传到服务器</button>
+          </div>
+          <div class="compare-toggle" style="margin-top:8px">
+            <label class="switch-label">
+              <input type="checkbox" id="sync-auto">
+              <span class="switch-text">本地变更后自动上传到服务器</span>
+            </label>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">数据管理</h2>
+          <div class="data-actions">
+            <button id="export-backup" class="btn btn-outline">📦 导出备份</button>
+            <button id="import-backup" class="btn btn-outline">📂 导入恢复</button>
+          </div>
+          <div class="data-actions">
+            <button id="export-csv" class="btn btn-outline">导出 CSV</button>
+            <button id="clear-all" class="btn btn-danger">清空所有数据</button>
+          </div>
+          <input type="file" id="import-file" accept=".json" style="display:none">
+          <p class="privacy-notice">⚠ 默认数据在本地浏览器；启用云端后由您自管的服务器保存副本。清除浏览器数据前请先导出备份或使用上传。</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 编辑弹窗 -->
+  <div id="edit-modal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <h3 class="modal-title">编辑记录</h3>
+      <form id="edit-form">
+        <div class="form-group">
+          <label class="form-label">成员</label>
+          <select id="edit-member" class="form-input"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-score">积分</label>
+          <input type="number" id="edit-score" class="form-input" step="0.1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">时间</label>
+          <div class="time-picker">
+            <input type="date" id="edit-date" class="form-input" required>
+            <input type="time" id="edit-time" class="form-input" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-note">备注</label>
+          <input type="text" id="edit-note" class="form-input" placeholder="局号 / 场地">
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="edit-cancel" class="btn btn-outline">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 删除确认弹窗 -->
+  <div id="confirm-modal" class="modal-overlay" style="display:none">
+    <div class="modal modal-sm">
+      <h3 class="modal-title" id="confirm-title">确认删除</h3>
+      <p id="confirm-message">确定要删除此记录吗？</p>
+      <div class="modal-actions">
+        <button id="confirm-cancel" class="btn btn-outline">取消</button>
+        <button id="confirm-ok" class="btn btn-danger">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

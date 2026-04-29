@@ -1,0 +1,17 @@
+{
+  "name": "poker-scores-server",
+  "version": "1.0.0",
+  "description": "德州扑克记分工具后端：按工作区存储成员与积分记录",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
