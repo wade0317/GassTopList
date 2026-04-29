@@ -2,75 +2,66 @@
 
 浏览器端记分、排行榜与图表；数据默认存在本机 **IndexedDB**。可选启动 **后端服务**，按「工作区 ID」把成员与积分记录存到服务器磁盘，便于备份或多设备共用。
 
-## 一、前端怎么用
+## 快速开始
 
-1. 用浏览器直接打开项目根目录下的 `index.html`（或用任意静态服务器托管该目录）。
-2. 在 **成员管理** 里添加成员，在 **记分录入** 里按局录入积分。
-3. **数据管理** 里可导出 CSV、JSON 备份或从备份恢复。
+### 前端
+1. 用浏览器打开 `web/index.html`（或用任意静态服务器托管 `web/` 目录）。
+2. 在 **成员管理** 添加成员，在 **记分录入** 按局录入积分。
+3. **数据管理** 可导出 CSV / JSON 备份或从备份恢复。
 
-## 二、后端服务（存用户积分数据）
-
-### 2.1 作用
-
-- 按 **工作区 ID** 保存一份 `{ members, records }`，与前端 IndexedDB 结构一致。
-- 接口简单：健康检查、读整包、写整包（覆盖）。
-
-### 2.2 安装与启动
-
+### 后端（可选）
 ```bash
 cd server
 npm install
 npm start
 ```
-
-默认监听 **http://127.0.0.1:3840**。修改端口：
-
+默认监听 `http://127.0.0.1:3840`，修改端口：
 ```bash
-set PORT=5000
-npm start
+PORT=5000 npm start    # macOS / Linux
+set PORT=5000 && npm start  # Windows cmd
 ```
 
-（Linux/macOS 使用 `export PORT=5000`。）
+## 项目结构
 
-### 2.3 数据存哪儿
+```
+rank/
+├── readme.md              # 项目入口（本文件）
+├── CLAUDE.md              # Claude Code 项目级指引（AI 协作上下文）
+├── .gitignore             # 根级忽略规则
+├── docs/                  # 所有项目文档
+│   ├── requirements.md    # 需求文档
+│   ├── design.md          # 设计文档
+│   └── rules.md           # 项目规则
+├── web/                   # 前端（纯静态，无构建）
+│   ├── index.html         # 页面结构
+│   ├── styles.css         # 样式
+│   └── app.js             # 业务逻辑：Store / Render / ApiSync / Events
+└── server/                # 后端（可选，Node.js + Express）
+    ├── index.js           # HTTP 入口与文件持久化
+    ├── package.json       # 依赖：express、cors
+    └── data/workspaces/   # 运行时数据，已 gitignore
+```
 
-- 目录：`server/data/workspaces/`
-- 每个工作区一个文件：`{工作区ID}.json`，内容为 `members`、`records`、`updatedAt`。
+## 项目文档索引
 
-### 2.4 HTTP 接口说明
+| 文档 | 内容 | 适合谁先读 |
+|------|------|-----------|
+| [`docs/requirements.md`](docs/requirements.md) | 功能 / 非功能需求、数据模型、验收标准 | 产品 / 新加入的开发 |
+| [`docs/design.md`](docs/design.md) | 整体架构、前后端模块、接口契约、部署形态、已知限制 | 实现与改造前必读 |
+| [`docs/rules.md`](docs/rules.md) | 目录约定、分支与 Commit 规范、代码与安全规范、AI 协作约定 | 每位提交者 |
+| [`CLAUDE.md`](CLAUDE.md) | Claude Code 会话级项目上下文（结构 / 约束 / 文档导航） | AI 协作场景 |
+
+## 后端接口速览
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/health` | 健康检查，返回 `{ ok: true, ... }` |
-| GET | `/api/workspaces/:workspaceId` | 读取该工作区数据；无文件时返回空数组 |
-| PUT | `/api/workspaces/:workspaceId` | 请求体 JSON：`{ "members": [], "records": [] }`，整包覆盖保存 |
+| GET | `/api/health` | 健康检查 |
+| GET | `/api/workspaces/:id` | 读整包，无文件返回空 |
+| PUT | `/api/workspaces/:id` | 整包覆盖保存 |
 
-**工作区 ID** 规则：长度 8～128，仅允许英文字母、数字、下划线、连字符（`a-zA-Z0-9_-`），用于文件名，请勿使用 `../` 等非法字符。
+工作区 ID 规则：`a-zA-Z0-9_-`，长度 8–128。
 
-### 2.5 与前端联动
+## 注意
 
-1. 打开 **成员管理 → 云端同步（后端）**。
-2. 填写 **服务器地址**（例如 `http://127.0.0.1:3840`），可先点 **测试连接**。
-3. **工作区 ID** 首次自动生成；在另一台电脑同一浏览器若要共用，需自行把 ID 改成一致（高级用法：可手动改 `localStorage` 或后续做「导入工作区 ID」功能）。
-4. **上传到服务器**：立刻把当前本地数据 PUT 到服务器。
-5. **从服务器拉取**：会提示确认，确认后用服务器数据覆盖本地。
-6. **本地变更后自动上传到服务器**：勾选后，录入/编辑/删除等操作会在约 0.8 秒后自动上传；首次勾选会尝试立刻上传一次。
-
-**注意**：工作区 ID 相当于弱口令，勿公开分享；生产环境建议加反向代理、HTTPS 与鉴权（当前版本未内置登录）。
-
-## 三、项目文件说明
-
-| 文件 / 目录 | 用途 |
-|-------------|------|
-| `index.html` | 页面结构 |
-| `styles.css` | 样式 |
-| `app.js` | 前端逻辑、IndexedDB、`ApiSync` 云端同步 |
-| `server/index.js` | Express 后端入口 |
-| `server/package.json` | 后端依赖（express、cors） |
-| `requirements.md` | 产品需求说明 |
-
-## 四、改进方向（可选）
-
-- 后端增加登录或 API Key，避免他人猜到工作区 ID 篡改数据。
-- 增量同步与版本号冲突处理（当前为整包覆盖、末次写入为准）。
-- 用 Docker 一键启动后端 + 静态资源。
+- 工作区 ID 等同弱口令，勿公开分享；公网部署请自加反向代理、HTTPS、鉴权。
+- 当前同步为整包覆盖、末次写入为准；详见 `docs/design.md` 的「已知限制」。
