@@ -1,0 +1,18 @@
+# 构建上下文裁剪：只把后端运行需要的东西送进 docker
+.git
+.gitignore
+.DS_Store
+.claude
+
+# 前端、文档、部署模板都不进后端镜像
+web
+docs
+deploy
+readme.md
+CLAUDE.md
+
+# 依赖与运行时产物
+**/node_modules
+server/data
+**/*.log
+**/*.tmp

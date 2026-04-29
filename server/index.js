@@ -11,6 +11,8 @@ const cors = require('cors');
 
 // 监听端口，可通过环境变量 PORT 覆盖（默认 3840）
 const PORT = Number(process.env.PORT) || 3840;
+// 监听地址：生产环境置于反代后建议 127.0.0.1；默认 0.0.0.0 便于局域网开发
+const HOST = process.env.HOST || '0.0.0.0';
 // 数据文件根目录（与 index.js 同级的 data/workspaces）
 const DATA_ROOT = path.join(__dirname, 'data', 'workspaces');
 
@@ -80,7 +82,7 @@ app.use(express.json({ limit: '20mb' }));
 
 /** 健康检查，用于确认服务已启动 */
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'poker-scores-server', time: Date.now() });
+  res.json({ ok: true, service: 'gasstoplist', time: Date.now() });
 });
 
 /**
@@ -120,9 +122,9 @@ app.use((_req, res) => {
   res.status(404).json({ error: '未找到接口' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
   // eslint-disable-next-line no-console
-  console.log(`[poker-scores-server] 已启动 http://127.0.0.1:${PORT}`);
+  console.log(`[GassTopList] 已启动 http://${HOST}:${PORT}`);
   // eslint-disable-next-line no-console
-  console.log(`[poker-scores-server] 数据目录 ${DATA_ROOT}`);
+  console.log(`[GassTopList] 数据目录 ${DATA_ROOT}`);
 });

@@ -1,5 +1,5 @@
 {
-  "name": "poker-scores-server",
+  "name": "gasstoplist-server",
   "version": "1.0.0",
   "description": "德州扑克记分工具后端：按工作区存储成员与积分记录",
   "main": "index.js",

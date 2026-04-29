@@ -1,0 +1,44 @@
+# 后端容器编排
+# 用法：在仓库根目录执行
+#   docker compose -f deploy/docker/docker-compose.yml up -d --build
+#   docker compose -f deploy/docker/docker-compose.yml logs -f
+#   docker compose -f deploy/docker/docker-compose.yml down
+#
+# 该服务仅监听 127.0.0.1:3840，外部一律由宿主 Nginx 反代进入。
+# 数据目录由 GASS_DATA_DIR 环境变量控制，默认 /var/lib/gasstoplist
+
+services:
+  backend:
+    build:
+      context: ../..               # 仓库根目录
+      dockerfile: deploy/docker/Dockerfile
+    image: gasstoplist:latest
+    container_name: GassTopList
+    restart: unless-stopped
+
+    # 仅暴露到宿主回环，外部通过 Nginx /api/ 进来
+    ports:
+      - "127.0.0.1:3840:3840"
+
+    # 持久化数据：宿主目录 ↔ 容器 /app/data
+    volumes:
+      - ${GASS_DATA_DIR:-/var/lib/gasstoplist}:/app/data
+
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3840
+
+    # 与 Dockerfile 内 HEALTHCHECK 一致，compose 也带一份便于 ps 显示
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:'+process.env.PORT+'/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

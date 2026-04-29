@@ -31,7 +31,13 @@ rank/
 ├── docs/                  # 所有项目文档
 │   ├── requirements.md    # 需求文档
 │   ├── design.md          # 设计文档
-│   └── rules.md           # 项目规则
+│   ├── rules.md           # 项目规则
+│   └── deploy.md          # Nginx + systemd 部署指南
+├── deploy/                # 生产部署模板
+│   ├── nginx/gass.bilicool.com.conf      # 宿主 Nginx 站点
+│   └── docker/                            # Docker 化后端
+│       ├── Dockerfile
+│       └── docker-compose.yml
 ├── web/                   # 前端（纯静态，无构建）
 │   ├── index.html         # 页面结构
 │   ├── styles.css         # 样式
@@ -49,6 +55,7 @@ rank/
 | [`docs/requirements.md`](docs/requirements.md) | 功能 / 非功能需求、数据模型、验收标准 | 产品 / 新加入的开发 |
 | [`docs/design.md`](docs/design.md) | 整体架构、前后端模块、接口契约、部署形态、已知限制 | 实现与改造前必读 |
 | [`docs/rules.md`](docs/rules.md) | 目录约定、分支与 Commit 规范、代码与安全规范、AI 协作约定 | 每位提交者 |
+| [`docs/deploy.md`](docs/deploy.md) | gass.bilicool.com 部署：宿主 Nginx + Docker 后端、HTTPS、备份、排障 | 运维 / 上线 |
 | [`CLAUDE.md`](CLAUDE.md) | Claude Code 会话级项目上下文（结构 / 约束 / 文档导航） | AI 协作场景 |
 
 ## 后端接口速览
@@ -61,7 +68,11 @@ rank/
 
 工作区 ID 规则：`a-zA-Z0-9_-`，长度 8–128。
 
+## 公网部署
+
+线上：`https://gass.bilicool.com`，架构 = **宿主 Nginx 托静态前端 + Docker 跑后端**。详细步骤见 [`docs/deploy.md`](docs/deploy.md)，部署模板见 [`deploy/`](deploy/)。
+
 ## 注意
 
-- 工作区 ID 等同弱口令，勿公开分享；公网部署请自加反向代理、HTTPS、鉴权。
+- 工作区 ID 等同弱口令，勿公开分享；公网部署必须启用 HTTPS，建议加访问控制（Basic Auth / IP 白名单）。
 - 当前同步为整包覆盖、末次写入为准；详见 `docs/design.md` 的「已知限制」。

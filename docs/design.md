@@ -59,7 +59,7 @@ rank/
 - JSON 文件持久化（无数据库）
 
 ### 4.2 关键实现
-- **端口**：默认 3840，环境变量 `PORT` 可覆盖。
+- **端口 / 监听地址**：默认 `0.0.0.0:3840`，可由 `PORT` / `HOST` 环境变量覆盖；置于反代后建议 `HOST=127.0.0.1`。
 - **数据目录**：`server/data/workspaces/{workspaceId}.json`。
 - **工作区 ID 校验**：`/^[a-zA-Z0-9_-]{8,128}$/`，阻止路径穿越。
 - **写入原子性**：先写 `*.tmp`，再 `rename` 覆盖，避免中途损坏。
@@ -82,7 +82,7 @@ rank/
 |------|----------|
 | 仅本地 | 浏览器直接打开 `web/index.html` |
 | 局域网共享 | 任意机器跑 `cd server && npm start`，前端填写其 IP:端口 |
-| 公网部署 | 反向代理 + HTTPS（鉴权目前未内置，建议配合 Basic Auth / IP 白名单） |
+| 公网部署 | 宿主 Nginx 托静态 + 反代 `/api/` 至 Docker 容器（Node 后端），Let's Encrypt HTTPS；详见 [`docs/deploy.md`](deploy.md)。鉴权未内置，建议加 Basic Auth / IP 白名单 |
 
 ## 6. 安全与隐私
 

@@ -16,7 +16,13 @@ rank/
 ├── docs/                  # 所有项目文档（修改前后请同步更新）
 │   ├── requirements.md    # 需求文档
 │   ├── design.md          # 设计文档
-│   └── rules.md           # 项目规则
+│   ├── rules.md           # 项目规则
+│   └── deploy.md          # 部署指南（Nginx + systemd + HTTPS）
+├── deploy/                # 生产部署模板
+│   ├── nginx/gass.bilicool.com.conf  # 宿主 Nginx
+│   └── docker/                        # Docker 化后端
+│       ├── Dockerfile
+│       └── docker-compose.yml
 ├── web/                   # 前端，无构建步骤
 │   ├── index.html
 │   ├── styles.css
@@ -34,6 +40,7 @@ rank/
 | [`docs/requirements.md`](docs/requirements.md) | 改动涉及新功能、字段、验收标准 |
 | [`docs/design.md`](docs/design.md) | 修改架构、模块边界、接口、数据模型 |
 | [`docs/rules.md`](docs/rules.md) | 提交前 / 命名 / 安全 / AI 协作规范 |
+| [`docs/deploy.md`](docs/deploy.md) | 修改部署相关（Nginx / systemd / 上线流程） |
 | [`readme.md`](readme.md) | 用户视角的安装与使用 |
 
 > 改了代码 ⇒ 看是否需要联动改 `docs/`；新增字段或接口 ⇒ **必须**在 `docs/design.md` 同步。
