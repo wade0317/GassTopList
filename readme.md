@@ -1,20 +1,20 @@
 # 德州扑克记分工具
 
-浏览器端记分、排行榜与图表；数据默认存在本机 **IndexedDB**。可选启动 **后端服务**，按「工作区 ID」把成员与积分记录存到服务器磁盘，便于备份或多设备共用。
+浏览器端记分、排行榜与图表；数据统一存放在后端 **SQLite** 数据库中。前端不再使用 `IndexedDB` 或 `localStorage` 持久化业务数据，必须通过后端读写。
 
 ## 快速开始
 
-### 前端
-1. 用浏览器打开 `web/index.html`（或用任意静态服务器托管 `web/` 目录）。
-2. 在 **成员管理** 添加成员，在 **记分录入** 按局录入积分。
-3. **数据管理** 可导出 CSV / JSON 备份或从备份恢复。
-
-### 后端（可选）
+### 启动方式
 ```bash
 cd server
 npm install
 npm start
 ```
+
+启动后直接在浏览器打开：
+
+- `http://127.0.0.1:3840/`
+
 默认监听 `http://127.0.0.1:3840`，修改端口：
 ```bash
 PORT=5000 npm start    # macOS / Linux
@@ -42,10 +42,10 @@ rank/
 │   ├── index.html         # 页面结构
 │   ├── styles.css         # 样式
 │   └── app.js             # 业务逻辑：Store / Render / ApiSync / Events
-└── server/                # 后端（可选，Node.js + Express）
-    ├── index.js           # HTTP 入口与文件持久化
-    ├── package.json       # 依赖：express、cors
-    └── data/workspaces/   # 运行时数据，已 gitignore
+└── server/                # 后端（必需，Node.js + Express + SQLite）
+    ├── index.js           # HTTP 入口、SQLite 读写、静态页托管
+    ├── package.json       # 依赖：express、cors、better-sqlite3
+    └── data/              # 运行时数据目录（SQLite 数据库文件）
 ```
 
 ## 项目文档索引
@@ -63,10 +63,32 @@ rank/
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/health` | 健康检查 |
-| GET | `/api/workspaces/:id` | 读整包，无文件返回空 |
-| PUT | `/api/workspaces/:id` | 整包覆盖保存 |
+| GET | `/api/auth/me` | 查询当前登录角色 |
+| POST | `/api/auth/guest` | 游客登录 |
+| POST | `/api/auth/admin` | 管理员密码登录 |
+| POST | `/api/auth/logout` | 退出登录 |
+| GET | `/api/state` | 读取默认账本全部数据 |
+| POST | `/api/members` | 新增成员 |
+| DELETE | `/api/members/:id` | 删除成员 |
+| POST | `/api/records` | 批量新增积分记录 |
+| PUT | `/api/records/:id` | 更新单条记录 |
+| DELETE | `/api/records/:id` | 删除单条记录 |
+| DELETE | `/api/state` | 清空整个账本 |
 
-工作区 ID 规则：`a-zA-Z0-9_-`，长度 8–128。
+## 数据存储说明
+
+- 成员页已隐藏同步模块与数据管理模块。
+- 前端所有业务数据都直接读写后端 SQLite，不再保存到浏览器本地数据库。
+- 当前为单账本模式，不再使用工作区 ID。
+- 若后端未启动，页面无法正常读写数据。
+
+## 登录与权限
+
+- 首次进入会先看到登录界面。
+- **游客登录**：可直接进入，只能查看排行榜、图表、历史记录和成员列表。
+- **管理员登录**：输入密码后可录入积分、添加成员、编辑记录、删除记录。
+- 默认管理员密码为 `15011501`，可通过环境变量 `ADMIN_PASSWORD` 覆盖。
+- 登录态通过后端签名 Cookie 保存；刷新页面后会保留当前角色，直到退出或过期。
 
 ## 公网部署
 
@@ -74,5 +96,6 @@ rank/
 
 ## 注意
 
-- 工作区 ID 等同弱口令，勿公开分享；公网部署必须启用 HTTPS，建议加访问控制（Basic Auth / IP 白名单）。
-- 当前同步为整包覆盖、末次写入为准；详见 `docs/design.md` 的「已知限制」。
+- 现在必须先启动后端再使用页面。
+- SQLite 数据库文件位于 `server/data/gasstoplist.sqlite3`。
+- 若公网部署，务必修改 `ADMIN_PASSWORD` 与 `AUTH_SECRET`，并建议继续加 Nginx 访问控制。

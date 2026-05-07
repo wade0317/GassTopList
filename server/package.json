@@ -1,7 +1,7 @@
 {
   "name": "gasstoplist-server",
   "version": "1.0.0",
-  "description": "德州扑克记分工具后端：按工作区存储成员与积分记录",
+  "description": "德州扑克记分工具后端：使用 SQLite 持久化默认账本",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -11,6 +11,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "better-sqlite3": "^12.9.0",
     "cors": "^2.8.5",
     "express": "^4.21.2"
   }

@@ -7,10 +7,31 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="app">
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <h1 class="login-title">德州扑克记分工具</h1>
+      <p class="login-subtitle">请选择登录方式。游客可直接进入查看，管理员输入密码后可录入和修改数据。</p>
+      <div class="login-section">
+        <button type="button" id="btn-login-guest" class="btn btn-outline btn-full">游客登录（仅查看）</button>
+      </div>
+      <form id="admin-login-form" class="login-section">
+        <label class="form-label" for="admin-password">管理员密码</label>
+        <input type="password" id="admin-password" class="form-input" placeholder="请输入管理员密码" autocomplete="current-password">
+        <button type="submit" class="btn btn-primary btn-full">管理员登录</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="app" style="display:none">
     <!-- 顶部导航 -->
     <header class="app-header">
-      <h1 class="app-title">♠ 记分工具</h1>
+      <div class="app-title-row">
+        <h1 class="app-title">♠ 记分工具</h1>
+        <div class="auth-tools">
+          <span id="auth-role-badge" class="role-badge" style="display:none"></span>
+          <button type="button" id="btn-logout" class="btn btn-sm btn-outline" style="display:none">退出登录</button>
+        </div>
+      </div>
       <nav class="tab-nav">
         <button class="tab-btn active" data-tab="entry">记分录入</button>
         <button class="tab-btn" data-tab="leaderboard">排行榜</button>
@@ -26,6 +47,7 @@
         <!-- 录入表单 -->
         <div class="card entry-form-card">
           <h2 class="card-title">录入积分</h2>
+          <p id="entry-readonly-tip" class="readonly-tip" style="display:none">游客登录仅可查看当前数据，不能录入积分。</p>
           <form id="entry-form">
             <div class="form-group">
               <label class="form-label">输入积分（留空则不记录）</label>
@@ -141,8 +163,9 @@
 
       <!-- 成员管理页 -->
       <section id="page-members" class="page">
-        <div class="card">
+        <div id="member-add-card" class="card">
           <h2 class="card-title">添加成员</h2>
+          <p id="members-readonly-tip" class="readonly-tip" style="display:none">游客登录仅可查看成员列表，不能新增或删除成员。</p>
           <form id="member-form" class="inline-form">
             <input type="text" id="member-name" class="form-input flex-1" placeholder="输入成员名称" required maxlength="20">
             <button type="submit" class="btn btn-primary">添加</button>
@@ -153,47 +176,6 @@
           <div id="member-list">
             <!-- 由 JS 动态渲染 -->
           </div>
-        </div>
-        <div class="card">
-          <h2 class="card-title">云端同步（后端）</h2>
-          <p class="privacy-notice" style="margin-bottom:10px">
-            在电脑本机或其它设备上启动后端服务后，可把积分数据存到服务器，便于多设备共用或备份。
-          </p>
-          <div class="form-group">
-            <label class="form-label" for="api-base-url">服务器地址</label>
-            <input type="url" id="api-base-url" class="form-input" placeholder="http://127.0.0.1:3840" autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="workspace-id-display">工作区 ID（请勿泄露给他人）</label>
-            <div class="inline-form">
-              <input type="text" id="workspace-id-display" class="form-input flex-1" readonly title="同一 ID 在不同浏览器可拉取同一份数据">
-              <button type="button" id="btn-copy-workspace" class="btn btn-outline">复制</button>
-            </div>
-          </div>
-          <div class="data-actions">
-            <button type="button" id="btn-test-api" class="btn btn-outline">测试连接</button>
-            <button type="button" id="btn-pull-server" class="btn btn-outline">从服务器拉取</button>
-            <button type="button" id="btn-push-server" class="btn btn-primary">上传到服务器</button>
-          </div>
-          <div class="compare-toggle" style="margin-top:8px">
-            <label class="switch-label">
-              <input type="checkbox" id="sync-auto">
-              <span class="switch-text">本地变更后自动上传到服务器</span>
-            </label>
-          </div>
-        </div>
-        <div class="card">
-          <h2 class="card-title">数据管理</h2>
-          <div class="data-actions">
-            <button id="export-backup" class="btn btn-outline">📦 导出备份</button>
-            <button id="import-backup" class="btn btn-outline">📂 导入恢复</button>
-          </div>
-          <div class="data-actions">
-            <button id="export-csv" class="btn btn-outline">导出 CSV</button>
-            <button id="clear-all" class="btn btn-danger">清空所有数据</button>
-          </div>
-          <input type="file" id="import-file" accept=".json" style="display:none">
-          <p class="privacy-notice">⚠ 默认数据在本地浏览器；启用云端后由您自管的服务器保存副本。清除浏览器数据前请先导出备份或使用上传。</p>
         </div>
       </section>
     </main>
