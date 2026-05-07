@@ -1,5 +1,5 @@
 /**
- * 德州扑克记分 — 后端服务
+ * Gass龙虎榜 — 后端服务
  * 作用：使用 SQLite 持久化单账本数据，并托管前端静态页面。
  * 启动：在 server 目录执行 npm install && npm start
  */
@@ -69,7 +69,7 @@ function buildAuthCookieValue(role) {
   return `${payload}.${signature}`;
 }
 
-/** 从请求中解析当前登录角色；校验失败时视为未登录 */
+/** 从请求中解析当前登录角色；当前版本仅保留管理员登录。 */
 function readAuthSession(req) {
   const cookies = parseCookies(req.headers.cookie);
   const raw = cookies[AUTH_COOKIE_NAME];
@@ -77,7 +77,7 @@ function readAuthSession(req) {
   const parts = raw.split('.');
   if (parts.length !== 3) return null;
   const [role, expiresAtRaw, signature] = parts;
-  if (!['guest', 'admin'].includes(role)) return null;
+  if (role !== 'admin') return null;
   const expiresAt = Number(expiresAtRaw);
   if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return null;
   const payload = `${role}.${expiresAt}`;
@@ -87,7 +87,7 @@ function readAuthSession(req) {
   return { role, expiresAt };
 }
 
-/** 写入新的认证 Cookie；游客与管理员都走同一套会话结构 */
+/** 写入新的认证 Cookie；当前仅签发管理员会话。 */
 function setAuthCookie(res, role) {
   const cookieValue = encodeURIComponent(buildAuthCookieValue(role));
   res.setHeader(
@@ -293,12 +293,6 @@ app.get('/api/health', (_req, res) => {
 app.get('/api/auth/me', (req, res) => {
   if (!req.auth) return res.json({ authenticated: false, role: null });
   return res.json({ authenticated: true, role: req.auth.role, expiresAt: req.auth.expiresAt });
-});
-
-/** 游客可直接登录；只发只读权限的会话 Cookie */
-app.post('/api/auth/guest', (_req, res) => {
-  setAuthCookie(res, 'guest');
-  res.json({ ok: true, role: 'guest' });
 });
 
 /** 管理员登录：必须输入正确密码 */

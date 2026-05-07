@@ -1,7 +1,7 @@
 {
   "name": "gasstoplist-server",
   "version": "1.0.0",
-  "description": "德州扑克记分工具后端：使用 SQLite 持久化默认账本",
+  "description": "Gass龙虎榜后端：使用 SQLite 持久化默认账本",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

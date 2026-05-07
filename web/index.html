@@ -3,21 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>德州扑克记分工具</title>
+  <title>Gass龙虎榜</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="login-screen" class="login-screen">
     <div class="login-card">
-      <h1 class="login-title">德州扑克记分工具</h1>
-      <p class="login-subtitle">请选择登录方式。游客可直接进入查看，管理员输入密码后可录入和修改数据。</p>
-      <div class="login-section">
-        <button type="button" id="btn-login-guest" class="btn btn-outline btn-full">游客登录（仅查看）</button>
-      </div>
+      <h1 class="login-title">Gass龙虎榜</h1>
+      <p class="login-subtitle">请输入管理员密码后登录，即可录入、查看和管理积分数据。</p>
       <form id="admin-login-form" class="login-section">
         <label class="form-label" for="admin-password">管理员密码</label>
         <input type="password" id="admin-password" class="form-input" placeholder="请输入管理员密码" autocomplete="current-password">
-        <button type="submit" class="btn btn-primary btn-full">管理员登录</button>
+        <button type="submit" class="btn btn-primary btn-full">密码登录</button>
       </form>
     </div>
   </div>
@@ -26,7 +23,7 @@
     <!-- 顶部导航 -->
     <header class="app-header">
       <div class="app-title-row">
-        <h1 class="app-title">♠ 记分工具</h1>
+        <h1 class="app-title">Gass龙虎榜</h1>
         <div class="auth-tools">
           <span id="auth-role-badge" class="role-badge" style="display:none"></span>
           <button type="button" id="btn-logout" class="btn btn-sm btn-outline" style="display:none">退出登录</button>
@@ -47,7 +44,7 @@
         <!-- 录入表单 -->
         <div class="card entry-form-card">
           <h2 class="card-title">录入积分</h2>
-          <p id="entry-readonly-tip" class="readonly-tip" style="display:none">游客登录仅可查看当前数据，不能录入积分。</p>
+          <p id="entry-readonly-tip" class="readonly-tip" style="display:none">请先完成管理员密码登录后再录入积分。</p>
           <form id="entry-form">
             <div class="form-group">
               <label class="form-label">输入积分（留空则不记录）</label>
@@ -165,7 +162,7 @@
       <section id="page-members" class="page">
         <div id="member-add-card" class="card">
           <h2 class="card-title">添加成员</h2>
-          <p id="members-readonly-tip" class="readonly-tip" style="display:none">游客登录仅可查看成员列表，不能新增或删除成员。</p>
+          <p id="members-readonly-tip" class="readonly-tip" style="display:none">请先完成管理员密码登录后再管理成员。</p>
           <form id="member-form" class="inline-form">
             <input type="text" id="member-name" class="form-input flex-1" placeholder="输入成员名称" required maxlength="20">
             <button type="submit" class="btn btn-primary">添加</button>

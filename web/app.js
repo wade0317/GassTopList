@@ -1,5 +1,5 @@
 /* ==============================
-   德州扑克记分工具 - App Logic
+   Gass龙虎榜 - App Logic
    ============================== */
 
 // ===== Store（仅内存缓存 + 后端 SQLite API） =====
@@ -30,10 +30,6 @@ async function requestJSON(path, options = {}) {
 const Auth = {
   async fetchMe() {
     return requestJSON('/api/auth/me');
-  },
-
-  async loginGuest() {
-    return requestJSON('/api/auth/guest', { method: 'POST' });
   },
 
   async loginAdmin(password) {
@@ -276,17 +272,13 @@ function isAdmin() {
   return state.auth?.role === 'admin';
 }
 
-function isGuest() {
-  return state.auth?.role === 'guest';
-}
-
 function ensureAdminAction() {
   if (isAdmin()) return true;
-  toast('游客登录仅可查看，管理员登录后才能修改数据', 'error');
+  toast('请先输入管理员密码登录', 'error');
   return false;
 }
 
-/** 根据当前角色切换页面可编辑能力；游客只读，管理员可增删改。 */
+/** 根据当前登录状态切换页面可编辑能力；登录后开放完整功能。 */
 function applyRolePermissions() {
   document.body.classList.toggle('is-readonly', !isAdmin());
 
@@ -310,12 +302,12 @@ function applyRolePermissions() {
   if (app) app.style.display = 'block';
   if (roleBadge) {
     roleBadge.style.display = 'inline-flex';
-    roleBadge.textContent = isAdmin() ? '管理员' : '游客';
+    roleBadge.textContent = '管理员';
   }
   if (logoutBtn) logoutBtn.style.display = 'inline-flex';
-  if (entryTip) entryTip.style.display = isAdmin() ? 'none' : 'block';
-  if (membersTip) membersTip.style.display = isAdmin() ? 'none' : 'block';
-  if (memberAddCard) memberAddCard.style.display = isAdmin() ? 'block' : 'none';
+  if (entryTip) entryTip.style.display = 'none';
+  if (membersTip) membersTip.style.display = 'none';
+  if (memberAddCard) memberAddCard.style.display = 'block';
 
   const entryForm = $('entry-form');
   if (entryForm) {
@@ -448,7 +440,7 @@ function renderHistory() {
               <button class="btn-icon edit-record" data-id="${r.id}" title="编辑">✏️</button>
               <button class="btn-icon danger delete-record" data-id="${r.id}" title="删除">🗑</button>
             `
-            : '<span class="readonly-actions-note">游客只读</span>'}
+            : '<span class="readonly-actions-note">请先登录</span>'}
         </div>
       </div>
     `;
@@ -584,7 +576,7 @@ function renderMembers() {
         <div class="member-item-actions">
           ${isAdmin()
             ? `<button class="btn-icon danger delete-member" data-id="${m.id}" title="删除">🗑</button>`
-            : '<span class="readonly-actions-note">游客只读</span>'}
+            : '<span class="readonly-actions-note">请先登录</span>'}
         </div>
       </div>
     `;
@@ -1018,18 +1010,7 @@ async function init() {
       if (e.target === $('confirm-modal')) closeConfirm();
     });
 
-    // 登录相关：游客直接登录，管理员输入密码后登录，已登录用户可退出。
-    $('btn-login-guest').addEventListener('click', async () => {
-      try {
-        const payload = await Auth.loginGuest();
-        state.auth = { role: payload.role };
-        await loadAppData();
-        toast('已以游客身份登录', 'info');
-      } catch (err) {
-        toast(err.message || '游客登录失败', 'error');
-      }
-    });
-
+    // 登录相关：仅保留管理员密码登录；登录后可执行全部功能。
     $('admin-login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const password = $('admin-password').value;
@@ -1038,9 +1019,9 @@ async function init() {
         state.auth = { role: payload.role };
         $('admin-password').value = '';
         await loadAppData();
-        toast('管理员登录成功');
+        toast('登录成功');
       } catch (err) {
-        toast(err.message || '管理员登录失败', 'error');
+        toast(err.message || '密码登录失败', 'error');
       }
     });
 
