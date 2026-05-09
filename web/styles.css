@@ -169,6 +169,10 @@ body {
   white-space: nowrap;
 }
 
+.form-input, input[type="date"] {
+  font-family: inherit;
+}
+
 .form-input {
   width: 100%;
   padding: 10px 12px;

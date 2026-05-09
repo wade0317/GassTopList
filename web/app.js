@@ -349,6 +349,7 @@ async function restoreAuthState() {
 function switchTab(tab) {
   if (state.currentTab !== tab) {
     state.currentTab = tab;
+    localStorage.setItem('lastTab', tab);
     document.querySelectorAll('.tab-btn').forEach(el => {
       el.classList.toggle('active', el.dataset.tab === tab);
     });
@@ -1063,6 +1064,12 @@ async function init() {
   }
 
   await restoreAuthState();
+
+  // 恢复上次选中的tab，首次默认第一个
+  const savedTab = localStorage.getItem('lastTab');
+  const tabs = [...document.querySelectorAll('.tab-btn')].map(el => el.dataset.tab);
+  const targetTab = savedTab && tabs.includes(savedTab) ? savedTab : tabs[0];
+  if (state.currentTab !== targetTab) switchTab(targetTab);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
