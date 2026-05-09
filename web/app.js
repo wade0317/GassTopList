@@ -772,6 +772,10 @@ function renderChartMembers() {
     container.innerHTML = '<span style="color:var(--text-muted);font-size:.875rem;">暂无成员</span>';
     return;
   }
+  const records = Store.getRecords();
+  const totalByMember = {};
+  records.forEach(r => { totalByMember[r.memberId] = (totalByMember[r.memberId] || 0) + r.score; });
+  members.sort((a, b) => (totalByMember[b.id] || 0) - (totalByMember[a.id] || 0));
   container.innerHTML = members.map(m => `
     <label>
       <input type="checkbox" value="${m.id}" class="chart-member-cb">
@@ -813,8 +817,12 @@ function renderChart() {
   chartCanvas.style.display = 'block';
   summaryEl.style.display = 'flex';
 
-  // Build datasets per member
-  const datasets = selected.map((memberId, i) => {
+  // Build datasets per member, sorted by total score desc
+  const totalByMember = {};
+  allRecords.forEach(r => { totalByMember[r.memberId] = (totalByMember[r.memberId] || 0) + r.score; });
+  const sortedSelected = [...selected].sort((a, b) => (totalByMember[b] || 0) - (totalByMember[a] || 0));
+
+  const datasets = sortedSelected.map((memberId, i) => {
     const memberRecords = allRecords
       .filter(r => r.memberId === memberId)
       .sort((a, b) => new Date(a.time) - new Date(b.time));

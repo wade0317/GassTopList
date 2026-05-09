@@ -817,6 +817,16 @@ body {
   to { opacity: 1; transform: translateX(0); }
 }
 
+/* ===== Footer ===== */
+.app-footer {
+  text-align: center;
+  padding: 16px 0 8px;
+}
+.version-text {
+  font-size: .75rem;
+  color: var(--text-muted);
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 480px) {
   .app-header { margin: 0 -8px; padding: 0 8px; }
